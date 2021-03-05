@@ -103,3 +103,7 @@ buildNumber.properties
 
 # Data directory
 data/
+
+# macOS
+.DS_Store
+._*

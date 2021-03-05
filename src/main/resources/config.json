@@ -1,0 +1,13 @@
+{
+  "bungeecord": "mc.minedroid.network",
+  "http_port": 3091,
+  "pterodactyl_host": "https://panel.minedroid.network",
+  "pterodactyl_client_api_key": "DNd7McXoU43Ov5EA3zY1PEjomBTmeH0uXlU2J3EHvkatxBEA",
+  "pterodactyl_application_api_key": "myvUWVxJBWul6fygaSzPlRE5dQFrHqwv8ShBH9mLGtBaOLjc",
+  "pterodactyl_admin_user_id": 1,
+  "github_access_token": "",
+  "mongo_host": "localhost",
+  "mongo_username": "minedroid",
+  "mongo_password": "dylan123",
+  "mongo_database": "minedroiddb"
+}

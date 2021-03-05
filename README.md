@@ -1,4 +1,4 @@
-# MastheadControl
+# Masthead
 Overhead control system for the Masthead suite.
 
 Commit messages should follow [Conventional Commits](https://conventionalcommits.org)

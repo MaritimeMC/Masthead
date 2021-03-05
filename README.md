@@ -22,7 +22,6 @@ We also make use of GitHub Milestones:
 
 **Contributors:**
 * Embrasure
-* elkell
 
 <hr>
   

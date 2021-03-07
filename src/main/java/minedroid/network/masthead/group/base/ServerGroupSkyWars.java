@@ -17,7 +17,7 @@ public class ServerGroupSkyWars extends ServerGroup {
                 SupportedMinecraftVersion._188,
                 1024,
                 1024,
-                new CreationThresholdsContainer(5, 2, 8)
+                new CreationThresholdsContainer(1, 1, 8)
         );
     }
 }

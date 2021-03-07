@@ -3,7 +3,7 @@ package minedroid.network.masthead.server;
 import com.mattmalec.pterodactyl4j.UtilizationState;
 import minedroid.network.masthead.event.ListenerManager;
 import minedroid.network.masthead.event.MastheadListener;
-import minedroid.network.masthead.event.ServerStatusChangeEvent;
+import minedroid.network.masthead.event.impl.ServerStatusChangeEvent;
 import minedroid.network.masthead.group.ServerGroupManager;
 import minedroid.network.masthead.model.ServerGroup;
 import minedroid.network.masthead.model.ServerStatus;

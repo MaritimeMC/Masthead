@@ -146,6 +146,10 @@ public class PterodactylController {
         return env;
     }
 
+    public ClientServer getClientServer(String identifier) {
+        return pteroClient.retrieveServerByIdentifier(identifier).execute();
+    }
+
     public List<ApplicationServer> getServers() {
         return pteroApplication.retrieveServers().execute();
     }

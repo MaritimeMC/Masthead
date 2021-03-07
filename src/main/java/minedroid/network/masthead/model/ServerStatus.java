@@ -5,7 +5,6 @@ public enum ServerStatus {
     CREATING,
     STARTING,
     IDLE,
-    QUEUING,
     RUNNING,
     DEAD;
 

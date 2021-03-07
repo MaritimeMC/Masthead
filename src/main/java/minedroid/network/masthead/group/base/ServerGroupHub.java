@@ -17,7 +17,7 @@ public class ServerGroupHub extends ServerGroup {
                 SupportedMinecraftVersion._188,
                 1024,
                 512,
-                new CreationThresholdsContainer(2, 1, 4)
+                new CreationThresholdsContainer(1, 1, 4)
         );
     }
 }

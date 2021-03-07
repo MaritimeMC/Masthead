@@ -1,5 +1,7 @@
 package minedroid.network.masthead.event;
 
+import minedroid.network.masthead.event.impl.ServerStatusChangeEvent;
+
 import java.util.HashSet;
 import java.util.Set;
 

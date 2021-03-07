@@ -1,6 +1,7 @@
 package minedroid.network.masthead.server;
 
 import com.mattmalec.pterodactyl4j.application.entities.ApplicationServer;
+import com.mattmalec.pterodactyl4j.client.entities.ClientServer;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import minedroid.network.masthead.ThreadPool;
@@ -8,13 +9,17 @@ import minedroid.network.masthead.bungee.BungeeCordManager;
 import minedroid.network.masthead.db.MongoDatabase;
 import minedroid.network.masthead.event.ListenerManager;
 import minedroid.network.masthead.group.ServerGroupManager;
+import minedroid.network.masthead.group.monitor.CreationUpdateReason;
+import minedroid.network.masthead.group.monitor.ServerGroupMonitor;
 import minedroid.network.masthead.log.Logger;
 import minedroid.network.masthead.model.MinecraftServer;
 import minedroid.network.masthead.model.ServerGroup;
 import minedroid.network.masthead.model.ServerStatus;
 import minedroid.network.masthead.panel.PterodactylController;
+import minedroid.network.masthead.panel.WebSocketListener;
 import org.bson.Document;
 
+import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -26,18 +31,23 @@ public class MinecraftServerManager {
     private final PterodactylController pterodactylController;
     private final MongoDatabase mongoDatabase;
     private final BungeeCordManager bungeeCordManager;
+    private final ListenerManager listenerManager;
 
     private static final String MINECRAFT_SERVER_COLLECTION = "mh_minecraftserver";
 
     private static final Object SERVER_CACHE_LOCK = new Object();
     private final Set<MinecraftServer> serverCache;
 
+    private final Map<ServerGroup, ServerGroupMonitor> monitorMap;
+
     public MinecraftServerManager(ServerGroupManager serverGroupManager, PterodactylController pterodactylController, MongoDatabase mongoDatabase, BungeeCordManager bungeeCordManager, ListenerManager listenerManager) {
         this.serverGroupManager = serverGroupManager;
         this.pterodactylController = pterodactylController;
         this.mongoDatabase = mongoDatabase;
         this.bungeeCordManager = bungeeCordManager;
+        this.listenerManager = listenerManager;
         this.serverCache = new HashSet<>();
+        this.monitorMap = new HashMap<>();
 
         new MinecraftServerListener(serverGroupManager, this, listenerManager).register();
     }
@@ -45,6 +55,17 @@ public class MinecraftServerManager {
     public void load() {
         removeLoneServers();
         loadServers();
+        beginMonitoring();
+    }
+
+    public void beginMonitoring() {
+        for (ServerGroup serverGroup : serverGroupManager.getServerGroups()) {
+
+            ServerGroupMonitor serverGroupMonitor = new ServerGroupMonitor(serverGroup, this);
+            serverGroupMonitor.requestCreationUpdate(CreationUpdateReason.STARTUP);
+
+            monitorMap.put(serverGroup, serverGroupMonitor);
+        }
     }
 
     public Set<MinecraftServer> getGroupServers(ServerGroup group) {
@@ -75,6 +96,7 @@ public class MinecraftServerManager {
         }
 
         for (ApplicationServer server : servers) {
+            // TODO URGENT get client server and check if it has a value for SERVER_NAME. if it doesn't, do nothing to avoid deleting non-masthead servers.
             if (collection.countDocuments(new Document("name", server.getName())) == 0) {
                 pterodactylController.deleteServer(server);
                 bungeeCordManager.serverDown(server.getName());
@@ -105,6 +127,9 @@ public class MinecraftServerManager {
             }
 
             Logger.info("Found server " + s.getName() + "; adding to cache.");
+
+            ClientServer clientServer = pterodactylController.getClientServer(s.getPanelIdentifier());
+            clientServer.getWebSocketBuilder().addEventListeners(new WebSocketListener(s, listenerManager)).build();
         }
 
     }
@@ -137,6 +162,9 @@ public class MinecraftServerManager {
             deleteServerFromDatabase(minecraftServer);
 
             bungeeCordManager.serverDown(minecraftServer);
+
+            ServerGroup group = serverGroupManager.getGroupByName(minecraftServer.getServerGroupName());
+            monitorMap.get(group).requestCreationUpdate(CreationUpdateReason.SERVER_DEAD);
         });
     }
 

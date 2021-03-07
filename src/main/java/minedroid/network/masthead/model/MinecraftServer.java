@@ -10,6 +10,8 @@ public class MinecraftServer {
     private final String name;
     private final long panelId;
     private final String panelIdentifier;
+    private final String ip;
+    private final int port;
     private final ServerStatus status;
     private final boolean online;
     private final int playerCount;

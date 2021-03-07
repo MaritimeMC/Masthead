@@ -19,8 +19,8 @@ import minedroid.network.masthead.time.ProcessTimer;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor
 public class PterodactylController {
@@ -63,82 +63,94 @@ public class PterodactylController {
     }
 
     public void deleteServer(MinecraftServer minecraftServer) {
-        ProcessTimer pt = new ProcessTimer("Server deletion for " + minecraftServer.getName());
-
         Logger.info("PterodactylController received deletion request for " + minecraftServer.getName() + ".");
-        pt.startSilently();
-        pteroApplication.retrieveServerById(minecraftServer.getPanelId()).executeAsync(server -> {
 
-            ClientServer execute = pteroClient.retrieveServerByIdentifier(server.getIdentifier()).execute();
-
-            if (!execute.isInstalling()) pteroClient.setPower(execute, PowerAction.STOP).execute();
-
-            server.getController().delete(false).execute();
-
-            pt.end();
-        });
+        ApplicationServer server = pteroApplication.retrieveServerById(minecraftServer.getPanelId()).execute();
+        deleteServer(server);
     }
 
-    public CompletableFuture<MinecraftServer> createServer(ServerGroup serverGroup) {
+    public void deleteServer(ApplicationServer server) {
+        ProcessTimer pt = new ProcessTimer("Server deletion for " + server.getName());
+        pt.startSilently();
+
+        Logger.info("PterodactylController received deletion request for " + server.getName() + ".");
+
+        ClientServer execute = pteroClient.retrieveServerByIdentifier(server.getIdentifier()).execute();
+
+        if (!execute.isInstalling()) pteroClient.setPower(execute, PowerAction.STOP).execute();
+
+        server.getController().delete(false).execute();
+
+        pt.end();
+    }
+
+    public MinecraftServer createServer(ServerGroup serverGroup, String name) {
         ProcessTimer pt = new ProcessTimer("Server creation for " + serverGroup.getName());
 
         Logger.info("PterodactylController received creation request for " + serverGroup.getName() + ".");
-        return CompletableFuture.supplyAsync(() -> {
-            pt.startSilently();
-            ServerAction server = pteroApplication.createServer();
 
-            ApplicationUser adminUser = pteroApplication.retrieveUserById(panelAuthDetails.getAdminUserId()).execute();
-            server.setOwner(adminUser);
+        pt.startSilently();
+        ServerAction server = pteroApplication.createServer();
 
-            Nest nest = pteroApplication.retrieveNestById(1).execute();
-            ApplicationEgg egg = pteroApplication.retrieveEggById(nest, 3).execute();
-            server.setEgg(egg);
+        ApplicationUser adminUser = pteroApplication.retrieveUserById(panelAuthDetails.getAdminUserId()).execute();
+        server.setOwner(adminUser);
 
-            Location loc = pteroApplication.retrieveLocationById(1).execute();
-            server.setLocation(loc);
+        Nest nest = pteroApplication.retrieveNestById(1).execute();
+        ApplicationEgg egg = pteroApplication.retrieveEggById(nest, 3).execute();
+        server.setEgg(egg);
 
-            server.setName(serverGroup.getName().toLowerCase() + RandomStringUtils.randomNumeric(5));
+        Location loc = pteroApplication.retrieveLocationById(1).execute();
+        server.setLocation(loc);
 
-            server.setEnvironment(
-                    generateEnvironmentVariables(serverGroup.getMinecraftVersion())
-            );
+        server.setName(serverGroup.getName().toLowerCase() + RandomStringUtils.randomNumeric(5));
 
-            server.setMemory(serverGroup.getRam(), DataType.MB);
-            server.setDisk(serverGroup.getDisk(), DataType.MB);
-            server.setCPU(0);
+        server.setEnvironment(
+                generateEnvironmentVariables(serverGroup.getMinecraftVersion(), name)
+        );
 
-            server.setBackups(0);
-            server.setAllocations(0);
-            server.setDatabases(0);
+        server.setMemory(serverGroup.getRam(), DataType.MB);
+        server.setDisk(serverGroup.getDisk(), DataType.MB);
+        server.setCPU(0);
 
-            server.setIO(500);
-            server.setSwap(0, DataType.MB);
+        server.setBackups(0);
+        server.setAllocations(0);
+        server.setDatabases(0);
 
-            ApplicationServer applicationServer = server.build().execute();
+        server.setIO(500);
+        server.setSwap(0, DataType.MB);
 
-            Logger.info("Successfully created " + applicationServer.getName() + " in Panel.");
+        ApplicationServer applicationServer = server.build().execute();
 
-            MinecraftServer minecraftServer = buildMinecraftServer(applicationServer, serverGroup);
-            pt.end();
+        Logger.info("Successfully created " + name + " in Panel.");
 
-            return minecraftServer;
-        });
+        MinecraftServer minecraftServer = buildMinecraftServer(applicationServer, serverGroup);
+        pt.end();
+
+        return minecraftServer;
     }
 
-    public Map<String, String> generateEnvironmentVariables(SupportedMinecraftVersion smv) {
+    private Map<String, String> generateEnvironmentVariables(SupportedMinecraftVersion smv, String name) {
         Map<String, String> env = new HashMap<>();
         env.put("MINECRAFT_VERSION", smv.getPaperVersionId());
         env.put("SERVER_JARFILE", "server.jar");
         env.put("BUILD_NUMBER", "latest");
+        env.put("SERVER_NAME", name);
 
         return env;
     }
 
-    public MinecraftServer buildMinecraftServer(ApplicationServer server, ServerGroup group) {
+    public List<ApplicationServer> getServers() {
+        return pteroApplication.retrieveServers().execute();
+    }
+
+    private MinecraftServer buildMinecraftServer(ApplicationServer server, ServerGroup group) {
+        assert server.getAllocations().isPresent();
         return new MinecraftServer(
-                group.getName().toLowerCase() + "_" + server.getIdentifier(),
+                server.getName(),
                 server.getIdLong(),
                 server.getIdentifier(),
+                server.getAllocations().get().get(0).getIP(),
+                server.getAllocations().get().get(0).getPortInt(),
                 ServerStatus.CREATING,
                 true,
                 0,

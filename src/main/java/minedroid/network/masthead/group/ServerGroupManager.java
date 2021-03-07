@@ -50,6 +50,11 @@ public class ServerGroupManager {
         }
 
         for (ServerGroup defaultServerGroup : DEFAULT_SERVER_GROUPS) {
+
+            /*
+                Use names for matching instead of equals() in case that values have been changed in DB and not in code.
+                DB takes precedence.
+            */
             if (serverGroups.stream().noneMatch((sg) -> sg.getName().equals(defaultServerGroup.getName()))) {
                 Logger.warning("Default group " + defaultServerGroup.getName() + " not found. Adding...");
                 addGroup(defaultServerGroup);

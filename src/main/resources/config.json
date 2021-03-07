@@ -9,5 +9,7 @@
   "mongo_host": "localhost",
   "mongo_username": "minedroid",
   "mongo_password": "dylan123",
-  "mongo_database": "minedroiddb"
+  "mongo_database": "minedroiddb",
+  "redis_host": "localhost",
+  "redis_password": ""
 }

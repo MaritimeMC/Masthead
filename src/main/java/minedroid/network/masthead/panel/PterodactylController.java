@@ -7,8 +7,10 @@ import com.mattmalec.pterodactyl4j.application.entities.*;
 import com.mattmalec.pterodactyl4j.application.managers.ServerAction;
 import com.mattmalec.pterodactyl4j.client.entities.ClientServer;
 import com.mattmalec.pterodactyl4j.client.entities.PteroClient;
+import com.mattmalec.pterodactyl4j.client.ws.hooks.ClientSocketListenerAdapter;
 import com.mattmalec.pterodactyl4j.exceptions.LoginException;
 import lombok.RequiredArgsConstructor;
+import minedroid.network.masthead.event.ListenerManager;
 import minedroid.network.masthead.file.FileManager;
 import minedroid.network.masthead.log.Logger;
 import minedroid.network.masthead.model.MinecraftServer;
@@ -26,6 +28,7 @@ import java.util.Map;
 public class PterodactylController {
 
     private final FileManager fileManager;
+    private final ListenerManager listenerManager;
 
     private PteroApplication pteroApplication;
     private PteroClient pteroClient;
@@ -124,6 +127,10 @@ public class PterodactylController {
         Logger.info("Successfully created " + name + " in Panel.");
 
         MinecraftServer minecraftServer = buildMinecraftServer(applicationServer, serverGroup);
+
+        ClientServer cs = pteroClient.retrieveServerByIdentifier(applicationServer.getIdentifier()).execute();
+        cs.getWebSocketBuilder().addEventListeners(new WebSocketListener(minecraftServer, listenerManager)).build();
+
         pt.end();
 
         return minecraftServer;

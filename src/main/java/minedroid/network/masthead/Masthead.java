@@ -6,10 +6,10 @@ import lombok.SneakyThrows;
 import minedroid.network.masthead.bungee.BungeeCordManager;
 import minedroid.network.masthead.db.MongoDatabase;
 import minedroid.network.masthead.db.RedisDatabase;
+import minedroid.network.masthead.event.ListenerManager;
 import minedroid.network.masthead.file.FileManager;
 import minedroid.network.masthead.group.ServerGroupManager;
 import minedroid.network.masthead.log.Logger;
-import minedroid.network.masthead.model.MinecraftServer;
 import minedroid.network.masthead.panel.PterodactylController;
 import minedroid.network.masthead.server.MinecraftServerManager;
 import minedroid.network.masthead.time.ProcessTimer;
@@ -31,10 +31,12 @@ public class Masthead {
 
         Logger.empty();
 
+        ListenerManager listenerManager = new ListenerManager();
+
         FileManager fileManager = new FileManager();
         fileManager.load();
 
-        PterodactylController pterodactylController = new PterodactylController(fileManager);
+        PterodactylController pterodactylController = new PterodactylController(fileManager, listenerManager);
         pterodactylController.load();
         pterodactylController.ensureCredentials();
 
@@ -49,7 +51,7 @@ public class Masthead {
 
         BungeeCordManager bungeeCordManager = new BungeeCordManager(redisDatabase);
 
-        MinecraftServerManager minecraftServerManager = new MinecraftServerManager(pterodactylController, mongoDatabase, bungeeCordManager);
+        MinecraftServerManager minecraftServerManager = new MinecraftServerManager(serverGroupManager, pterodactylController, mongoDatabase, bungeeCordManager, listenerManager);
         minecraftServerManager.load();
 
         Logger.empty();

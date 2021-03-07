@@ -6,37 +6,56 @@ import com.mongodb.client.MongoCollection;
 import minedroid.network.masthead.ThreadPool;
 import minedroid.network.masthead.bungee.BungeeCordManager;
 import minedroid.network.masthead.db.MongoDatabase;
+import minedroid.network.masthead.event.ListenerManager;
+import minedroid.network.masthead.group.ServerGroupManager;
 import minedroid.network.masthead.log.Logger;
 import minedroid.network.masthead.model.MinecraftServer;
 import minedroid.network.masthead.model.ServerGroup;
+import minedroid.network.masthead.model.ServerStatus;
 import minedroid.network.masthead.panel.PterodactylController;
 import org.bson.Document;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static minedroid.network.masthead.Masthead.GSON;
 
 public class MinecraftServerManager {
 
+    private final ServerGroupManager serverGroupManager;
     private final PterodactylController pterodactylController;
     private final MongoDatabase mongoDatabase;
-    private BungeeCordManager bungeeCordManager;
+    private final BungeeCordManager bungeeCordManager;
 
     private static final String MINECRAFT_SERVER_COLLECTION = "mh_minecraftserver";
 
     private static final Object SERVER_CACHE_LOCK = new Object();
     private final Set<MinecraftServer> serverCache;
 
-    public MinecraftServerManager(PterodactylController pterodactylController, MongoDatabase mongoDatabase, BungeeCordManager bungeeCordManager) {
+    public MinecraftServerManager(ServerGroupManager serverGroupManager, PterodactylController pterodactylController, MongoDatabase mongoDatabase, BungeeCordManager bungeeCordManager, ListenerManager listenerManager) {
+        this.serverGroupManager = serverGroupManager;
         this.pterodactylController = pterodactylController;
         this.mongoDatabase = mongoDatabase;
         this.bungeeCordManager = bungeeCordManager;
         this.serverCache = new HashSet<>();
+
+        new MinecraftServerListener(serverGroupManager, this, listenerManager).register();
     }
 
     public void load() {
         removeLoneServers();
         loadServers();
+    }
+
+    public Set<MinecraftServer> getGroupServers(ServerGroup group) {
+        return serverCache.stream().filter((sg) -> sg.getServerGroupName().equals(group.getName())).collect(Collectors.toSet());
+    }
+
+    public void updateServerStatus(MinecraftServer server, ServerStatus status) {
+        server.setStatus(status);
+
+        MongoCollection<Document> collection = mongoDatabase.getDatabase().getCollection(MINECRAFT_SERVER_COLLECTION);
+        collection.updateOne(new Document("name", server.getName()), new Document("$set", new Document("status", status.name())));
     }
 
     public void removeLoneServers() {
@@ -62,6 +81,17 @@ public class MinecraftServerManager {
                 Logger.info("Couldn't find a server in database matching " + server.getName() + "; deleted from panel.");
             }
         }
+    }
+
+    public void disposeOfDeadServer(MinecraftServer server) {
+        ServerGroup group = serverGroupManager.getGroupByName(server.getServerGroupName());
+
+        if (!group.isDisposable()) {
+            Logger.warning("Why are we trying to dispose of a non-disposable server? :(");
+            return;
+        }
+
+        deleteServer(server);
     }
 
     public void loadServers() {
@@ -98,8 +128,15 @@ public class MinecraftServerManager {
 
     public void deleteServer(MinecraftServer minecraftServer) {
         ThreadPool.ASYNC_POOL.submit(() -> {
-            bungeeCordManager.serverDown(minecraftServer);
+            pterodactylController.deleteServer(minecraftServer);
 
+            synchronized (SERVER_CACHE_LOCK) {
+                serverCache.remove(minecraftServer);
+            }
+
+            deleteServerFromDatabase(minecraftServer);
+
+            bungeeCordManager.serverDown(minecraftServer);
         });
     }
 
@@ -130,5 +167,13 @@ public class MinecraftServerManager {
 
         MongoCollection<Document> collection = mongoDatabase.getDatabase().getCollection(MINECRAFT_SERVER_COLLECTION);
         collection.insertOne(document);
+    }
+
+    private void deleteServerFromDatabase(MinecraftServer minecraftServer) {
+        // Use name instead of full document as values may differ if cached improperly.
+        Document document = new Document("name", minecraftServer.getName());
+
+        MongoCollection<Document> collection = mongoDatabase.getDatabase().getCollection(MINECRAFT_SERVER_COLLECTION);
+        collection.deleteOne(document);
     }
 }

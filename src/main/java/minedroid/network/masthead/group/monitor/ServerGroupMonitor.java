@@ -19,16 +19,17 @@ public class ServerGroupMonitor {
         this.minecraftServerManager = minecraftServerManager;
     }
 
-    public void createServer() {
-        minecraftServerManager.createServer(serverGroup);
+    public void createServer(boolean async) {
+        minecraftServerManager.createServer(serverGroup, async);
     }
 
     public void requestCreationUpdate(CreationUpdateReason cur) {
         Logger.info("Requesting creation update for group " + serverGroup.getName() + ": CreationUpdateReason#" + cur.toString());
-        doCreations();
+
+        doCreations(cur != CreationUpdateReason.STARTUP);
     }
 
-    private void doCreations() {
+    private void doCreations(boolean async) {
         CreationThresholdsContainer creationThresholds = serverGroup.getCreationThresholdsContainer();
 
         Set<MinecraftServer> servers = minecraftServerManager.getGroupServers(serverGroup);
@@ -61,7 +62,7 @@ public class ServerGroupMonitor {
             if (amountNeeded >= 1) {
                 Logger.info("Not enough idle servers for " + serverGroup.getName() + "; creating " + amountNeeded);
                 for (int i = 0; i < amountNeeded; i++) {
-                    createServer();
+                    createServer(async);
                 }
 
                 totalServers += amountNeeded;
@@ -73,7 +74,7 @@ public class ServerGroupMonitor {
 
             Logger.info("Not enough total servers for " + serverGroup.getName() + "; creating " + amountNeeded);
             for (int i = 0; i < amountNeeded; i++) {
-                createServer();
+                createServer(async);
             }
 
             totalServers += amountNeeded;

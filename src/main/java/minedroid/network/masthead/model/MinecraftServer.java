@@ -1,8 +1,8 @@
 package minedroid.network.masthead.model;
 
+import com.mattmalec.pterodactyl4j.UtilizationState;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 
 @AllArgsConstructor
@@ -17,6 +17,9 @@ public class MinecraftServer {
 
     @Setter
     private ServerStatus status;
+
+    @Setter
+    private UtilizationState panelStatus;
 
     @Setter
     private boolean online;

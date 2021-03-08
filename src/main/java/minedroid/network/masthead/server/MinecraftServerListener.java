@@ -26,7 +26,9 @@ public class MinecraftServerListener extends MastheadListener {
 
     @Override
     public void onServerStatusChange(ServerStatusChangeEvent event) {
+
         ServerGroup group = serverGroupManager.getGroupByName(event.getServer().getServerGroupName());
+
         if (group.isDisposable() && event.getStatus() == UtilizationState.OFFLINE) {
 
             minecraftServerManager.disposeOfDeadServer(event.getServer());
@@ -35,13 +37,13 @@ public class MinecraftServerListener extends MastheadListener {
             switch (event.getStatus()) {
                 case OFFLINE:
                 case STOPPING:
-                    minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.DEAD);
+                    minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.DEAD, UtilizationState.STOPPING);
                     return;
                 case RUNNING:
-                    minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.IDLE);
+                    minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.IDLE, UtilizationState.RUNNING);
                     return;
                 case STARTING:
-                    minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.STARTING);
+                    minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.STARTING, UtilizationState.STARTING);
 
             }
         }

@@ -3,6 +3,7 @@ package minedroid.network.masthead.panel;
 import com.mattmalec.pterodactyl4j.DataType;
 import com.mattmalec.pterodactyl4j.PowerAction;
 import com.mattmalec.pterodactyl4j.PteroBuilder;
+import com.mattmalec.pterodactyl4j.UtilizationState;
 import com.mattmalec.pterodactyl4j.application.entities.*;
 import com.mattmalec.pterodactyl4j.application.managers.ServerAction;
 import com.mattmalec.pterodactyl4j.client.entities.ClientServer;
@@ -10,6 +11,7 @@ import com.mattmalec.pterodactyl4j.client.entities.PteroClient;
 import com.mattmalec.pterodactyl4j.client.ws.hooks.ClientSocketListenerAdapter;
 import com.mattmalec.pterodactyl4j.exceptions.LoginException;
 import lombok.RequiredArgsConstructor;
+import minedroid.network.masthead.ThreadPool;
 import minedroid.network.masthead.event.ListenerManager;
 import minedroid.network.masthead.file.FileManager;
 import minedroid.network.masthead.log.Logger;
@@ -66,8 +68,6 @@ public class PterodactylController {
     }
 
     public void deleteServer(MinecraftServer minecraftServer) {
-        Logger.info("PterodactylController received deletion request for " + minecraftServer.getName() + ".");
-
         ApplicationServer server = pteroApplication.retrieveServerById(minecraftServer.getPanelId()).execute();
         deleteServer(server);
     }
@@ -105,7 +105,7 @@ public class PterodactylController {
         Location loc = pteroApplication.retrieveLocationById(1).execute();
         server.setLocation(loc);
 
-        server.setName(serverGroup.getName().toLowerCase() + RandomStringUtils.randomNumeric(5));
+        server.setName(name);
 
         server.setEnvironment(
                 generateEnvironmentVariables(serverGroup.getMinecraftVersion(), name)
@@ -130,7 +130,6 @@ public class PterodactylController {
 
         ClientServer cs = pteroClient.retrieveServerByIdentifier(applicationServer.getIdentifier()).execute();
         cs.getWebSocketBuilder().addEventListeners(new WebSocketListener(minecraftServer, listenerManager)).build();
-
         pt.end();
 
         return minecraftServer;
@@ -163,6 +162,7 @@ public class PterodactylController {
                 server.getAllocations().get().get(0).getIP(),
                 server.getAllocations().get().get(0).getPortInt(),
                 ServerStatus.CREATING,
+                UtilizationState.OFFLINE,
                 true,
                 0,
                 group.getName()

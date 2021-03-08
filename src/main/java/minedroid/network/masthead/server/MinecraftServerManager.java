@@ -1,9 +1,11 @@
 package minedroid.network.masthead.server;
 
+import com.mattmalec.pterodactyl4j.UtilizationState;
 import com.mattmalec.pterodactyl4j.application.entities.ApplicationServer;
 import com.mattmalec.pterodactyl4j.client.entities.ClientServer;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import lombok.SneakyThrows;
 import minedroid.network.masthead.ThreadPool;
 import minedroid.network.masthead.bungee.BungeeCordManager;
 import minedroid.network.masthead.db.MongoDatabase;
@@ -19,7 +21,6 @@ import minedroid.network.masthead.panel.PterodactylController;
 import minedroid.network.masthead.panel.WebSocketListener;
 import org.bson.Document;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,6 +35,7 @@ public class MinecraftServerManager {
     private final ListenerManager listenerManager;
 
     private static final String MINECRAFT_SERVER_COLLECTION = "mh_minecraftserver";
+    private static final String LONE_IGNORE_PREFIX = "MHIGNORE";
 
     private static final Object SERVER_CACHE_LOCK = new Object();
     private final Set<MinecraftServer> serverCache;
@@ -55,6 +57,7 @@ public class MinecraftServerManager {
     public void load() {
         removeLoneServers();
         loadServers();
+        cleanDisposableServers();
         beginMonitoring();
     }
 
@@ -68,15 +71,30 @@ public class MinecraftServerManager {
         }
     }
 
+    public void cleanDisposableServers() {
+        synchronized (SERVER_CACHE_LOCK) {
+
+            Set<MinecraftServer> clone = new HashSet<>(serverCache);
+            Logger.info("Searching old non-disposable servers and replacing...");
+            for (MinecraftServer minecraftServer : clone) {
+                if (serverGroupManager.getGroupByName(minecraftServer.getServerGroupName()).isDisposable()) {
+                    deleteServer(minecraftServer, false, false);
+                }
+            }
+        }
+    }
+
     public Set<MinecraftServer> getGroupServers(ServerGroup group) {
         return serverCache.stream().filter((sg) -> sg.getServerGroupName().equals(group.getName())).collect(Collectors.toSet());
     }
 
-    public void updateServerStatus(MinecraftServer server, ServerStatus status) {
+    public void updateServerStatus(MinecraftServer server, ServerStatus status, UtilizationState panelStatus) {
         server.setStatus(status);
+        server.setPanelStatus(panelStatus);
 
         MongoCollection<Document> collection = mongoDatabase.getDatabase().getCollection(MINECRAFT_SERVER_COLLECTION);
-        collection.updateOne(new Document("name", server.getName()), new Document("$set", new Document("status", status.name())));
+        collection.updateOne(new Document("name", server.getName()), new Document("$set", new Document()
+                .append("status", status.name()).append("panelStatus", panelStatus.name())));
     }
 
     public void removeLoneServers() {
@@ -96,8 +114,12 @@ public class MinecraftServerManager {
         }
 
         for (ApplicationServer server : servers) {
-            // TODO URGENT get client server and check if it has a value for SERVER_NAME. if it doesn't, do nothing to avoid deleting non-masthead servers.
-            if (collection.countDocuments(new Document("name", server.getName())) == 0) {
+            if (server.getEgg().get().get().getIdLong() != 3) {
+                // Egg
+                continue;
+            }
+
+            if (collection.countDocuments(new Document("name", server.getName())) == 0 && !server.getName().startsWith(LONE_IGNORE_PREFIX)) {
                 pterodactylController.deleteServer(server);
                 bungeeCordManager.serverDown(server.getName());
                 Logger.info("Couldn't find a server in database matching " + server.getName() + "; deleted from panel.");
@@ -113,9 +135,10 @@ public class MinecraftServerManager {
             return;
         }
 
-        deleteServer(server);
+        deleteServer(server, true);
     }
 
+    @SneakyThrows
     public void loadServers() {
 
         MongoCollection<Document> collection = mongoDatabase.getDatabase().getCollection(MINECRAFT_SERVER_COLLECTION);
@@ -134,51 +157,75 @@ public class MinecraftServerManager {
 
     }
 
-    public void createServer(ServerGroup serverGroup) {
-        ThreadPool.ASYNC_POOL.submit(() -> {
-            String name = generateServerName(serverGroup);
-            MinecraftServer server = pterodactylController.createServer(serverGroup, name);
-
-            synchronized (SERVER_CACHE_LOCK) {
-                serverCache.add(server);
-            }
-
-            addServerToDatabase(server);
-
-            bungeeCordManager.serverUp(server);
-            Logger.info("Successfully created " + name + ". Added to cache, database and informed Bungee.");
-        });
-
+    public void createServer(ServerGroup serverGroup, boolean async) {
+        if (async) ThreadPool.ASYNC_POOL.submit(() -> createServerFlow(serverGroup));
+        else createServerFlow(serverGroup);
     }
 
-    public void deleteServer(MinecraftServer minecraftServer) {
-        ThreadPool.ASYNC_POOL.submit(() -> {
-            pterodactylController.deleteServer(minecraftServer);
+    public void createServer(ServerGroup serverGroup) {
+        createServer(serverGroup, true);
+    }
 
-            synchronized (SERVER_CACHE_LOCK) {
-                serverCache.remove(minecraftServer);
-            }
+    public void createServerFlow(ServerGroup serverGroup) {
+        String name = generateServerName(serverGroup);
+        MinecraftServer server = pterodactylController.createServer(serverGroup, name);
 
-            deleteServerFromDatabase(minecraftServer);
+        synchronized (SERVER_CACHE_LOCK) {
+            serverCache.add(server);
+        }
 
-            bungeeCordManager.serverDown(minecraftServer);
+        addServerToDatabase(server);
 
-            ServerGroup group = serverGroupManager.getGroupByName(minecraftServer.getServerGroupName());
-            monitorMap.get(group).requestCreationUpdate(CreationUpdateReason.SERVER_DEAD);
-        });
+        bungeeCordManager.serverUp(server);
+        Logger.info("Successfully created " + name + ". Added to cache, database and informed Bungee.");
+    }
+
+    public void deleteServer(MinecraftServer server, boolean monitoringUpdate) {
+        deleteServer(server, monitoringUpdate, true);
+    }
+
+    public void deleteServer(MinecraftServer minecraftServer, boolean monitoringUpdate, boolean async) {
+        if (async) {
+            ThreadPool.ASYNC_POOL.submit(() -> deleteServerFlow(minecraftServer, monitoringUpdate));
+        } else {
+            deleteServerFlow(minecraftServer, monitoringUpdate);
+        }
+    }
+
+    private void deleteServerFlow(MinecraftServer minecraftServer, boolean monitoringUpdate) {
+        synchronized (SERVER_CACHE_LOCK) {
+            serverCache.remove(minecraftServer);
+        }
+
+        pterodactylController.deleteServer(minecraftServer);
+
+        deleteServerFromDatabase(minecraftServer);
+
+        bungeeCordManager.serverDown(minecraftServer);
+
+        Logger.info("Successfully deleted " + minecraftServer.getName());
+
+        ServerGroup group = serverGroupManager.getGroupByName(minecraftServer.getServerGroupName());
+
+        if (monitoringUpdate) monitorMap.get(group).requestCreationUpdate(CreationUpdateReason.SERVER_DEAD);
     }
 
     public String generateServerName(ServerGroup group) {
         boolean nameFound = false;
         String endName = "";
 
-        StringBuilder nBase = new StringBuilder(group.getName() + "_");
+        String nBase = group.getName();
         MongoCollection<Document> collection = mongoDatabase.getDatabase().getCollection(MINECRAFT_SERVER_COLLECTION);
 
         do {
+            Random r = new Random();
 
-            UUID uuid = UUID.randomUUID();
-            String name = nBase.append(uuid.toString(), 0, 8).toString();
+            String s = "";
+            for (int i = 0; i < 5; i++) {
+                s += r.nextInt(10);
+            }
+
+            String name = nBase + s;
 
             if (collection.countDocuments(new Document("name", name)) == 0) {
                 nameFound = true;

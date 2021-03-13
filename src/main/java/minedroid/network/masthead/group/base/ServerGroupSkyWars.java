@@ -1,9 +1,6 @@
 package minedroid.network.masthead.group.base;
 
-import minedroid.network.masthead.model.CreationThresholdsContainer;
-import minedroid.network.masthead.model.ServerGroup;
-import minedroid.network.masthead.model.ServerPlugin;
-import minedroid.network.masthead.model.SupportedMinecraftVersion;
+import minedroid.network.masthead.model.*;
 
 public class ServerGroupSkyWars extends ServerGroup {
 
@@ -15,6 +12,7 @@ public class ServerGroupSkyWars extends ServerGroup {
                 true,
                 ServerPlugin.SKYWARS,
                 SupportedMinecraftVersion._188,
+                LoadBalanceConfiguration.MOST_PLAYERS,
                 1024,
                 1024,
                 new CreationThresholdsContainer(1, 1, 8)

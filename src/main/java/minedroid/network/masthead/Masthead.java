@@ -3,7 +3,6 @@ package minedroid.network.masthead;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.SneakyThrows;
-import minedroid.network.masthead.bungee.BungeeCordManager;
 import minedroid.network.masthead.db.MongoDatabase;
 import minedroid.network.masthead.db.RedisDatabase;
 import minedroid.network.masthead.event.ListenerManager;
@@ -49,9 +48,7 @@ public class Masthead {
         ServerGroupManager serverGroupManager = new ServerGroupManager(pterodactylController, fileManager, mongoDatabase);
         serverGroupManager.load();
 
-        BungeeCordManager bungeeCordManager = new BungeeCordManager(redisDatabase);
-
-        MinecraftServerManager minecraftServerManager = new MinecraftServerManager(serverGroupManager, pterodactylController, mongoDatabase, bungeeCordManager, listenerManager);
+        MinecraftServerManager minecraftServerManager = new MinecraftServerManager(serverGroupManager, pterodactylController, mongoDatabase, listenerManager);
         minecraftServerManager.load();
 
         Logger.empty();

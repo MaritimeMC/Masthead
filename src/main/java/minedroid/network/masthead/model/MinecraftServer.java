@@ -2,11 +2,13 @@ package minedroid.network.masthead.model;
 
 import com.mattmalec.pterodactyl4j.UtilizationState;
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
 @AllArgsConstructor
 @Getter
+@EqualsAndHashCode
 public class MinecraftServer {
 
     private final String name;

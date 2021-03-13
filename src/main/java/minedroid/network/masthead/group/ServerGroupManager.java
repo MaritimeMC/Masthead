@@ -24,7 +24,7 @@ public class ServerGroupManager {
     private final FileManager fileManager;
     private final MongoDatabase mongoDatabase;
 
-    private static final String SERVER_GROUP_COLLECTION = "mh_servergroup";
+    public static final String SERVER_GROUP_COLLECTION = "mh_servergroup";
 
     private static final Set<ServerGroup> DEFAULT_SERVER_GROUPS = Sets.newHashSet(
             new ServerGroupHub(),

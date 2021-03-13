@@ -1,9 +1,6 @@
 package minedroid.network.masthead.group.base;
 
-import minedroid.network.masthead.model.CreationThresholdsContainer;
-import minedroid.network.masthead.model.ServerGroup;
-import minedroid.network.masthead.model.ServerPlugin;
-import minedroid.network.masthead.model.SupportedMinecraftVersion;
+import minedroid.network.masthead.model.*;
 
 public class ServerGroupStaff extends ServerGroup {
 
@@ -15,6 +12,7 @@ public class ServerGroupStaff extends ServerGroup {
                 false,
                 ServerPlugin.STAFF,
                 SupportedMinecraftVersion._188,
+                LoadBalanceConfiguration.RANDOM,
                 1024,
                 512,
                 new CreationThresholdsContainer(1, 1, 1)

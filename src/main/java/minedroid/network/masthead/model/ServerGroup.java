@@ -22,6 +22,7 @@ public class ServerGroup {
     private final boolean useAntiCheat;
     private final ServerPlugin basePlugin;
     private final SupportedMinecraftVersion minecraftVersion;
+    private final LoadBalanceConfiguration loadBalanceConfiguration;
 
     private final int ram;
     private final int disk;

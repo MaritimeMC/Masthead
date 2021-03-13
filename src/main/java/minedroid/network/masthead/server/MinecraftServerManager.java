@@ -7,7 +7,6 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import lombok.SneakyThrows;
 import minedroid.network.masthead.ThreadPool;
-import minedroid.network.masthead.bungee.BungeeCordManager;
 import minedroid.network.masthead.db.MongoDatabase;
 import minedroid.network.masthead.event.ListenerManager;
 import minedroid.network.masthead.group.ServerGroupManager;
@@ -31,10 +30,9 @@ public class MinecraftServerManager {
     private final ServerGroupManager serverGroupManager;
     private final PterodactylController pterodactylController;
     private final MongoDatabase mongoDatabase;
-    private final BungeeCordManager bungeeCordManager;
     private final ListenerManager listenerManager;
 
-    private static final String MINECRAFT_SERVER_COLLECTION = "mh_minecraftserver";
+    public static final String MINECRAFT_SERVER_COLLECTION = "mh_minecraftserver";
     private static final String LONE_IGNORE_PREFIX = "MHIGNORE";
 
     private static final Object SERVER_CACHE_LOCK = new Object();
@@ -42,11 +40,10 @@ public class MinecraftServerManager {
 
     private final Map<ServerGroup, ServerGroupMonitor> monitorMap;
 
-    public MinecraftServerManager(ServerGroupManager serverGroupManager, PterodactylController pterodactylController, MongoDatabase mongoDatabase, BungeeCordManager bungeeCordManager, ListenerManager listenerManager) {
+    public MinecraftServerManager(ServerGroupManager serverGroupManager, PterodactylController pterodactylController, MongoDatabase mongoDatabase, ListenerManager listenerManager) {
         this.serverGroupManager = serverGroupManager;
         this.pterodactylController = pterodactylController;
         this.mongoDatabase = mongoDatabase;
-        this.bungeeCordManager = bungeeCordManager;
         this.listenerManager = listenerManager;
         this.serverCache = new HashSet<>();
         this.monitorMap = new HashMap<>();
@@ -108,7 +105,6 @@ public class MinecraftServerManager {
 
             if (servers.stream().noneMatch(ps -> ps.getName().equals(s.getName()))) {
                 collection.deleteOne(document);
-                bungeeCordManager.serverDown(s);
                 Logger.info("Couldn't find a server in panel matching " + s.getName() + "; removed from database.");
             }
         }
@@ -121,7 +117,6 @@ public class MinecraftServerManager {
 
             if (collection.countDocuments(new Document("name", server.getName())) == 0 && !server.getName().startsWith(LONE_IGNORE_PREFIX)) {
                 pterodactylController.deleteServer(server);
-                bungeeCordManager.serverDown(server.getName());
                 Logger.info("Couldn't find a server in database matching " + server.getName() + "; deleted from panel.");
             }
         }
@@ -153,6 +148,7 @@ public class MinecraftServerManager {
 
             ClientServer clientServer = pterodactylController.getClientServer(s.getPanelIdentifier());
             clientServer.getWebSocketBuilder().addEventListeners(new WebSocketListener(s, listenerManager)).build();
+
         }
 
     }
@@ -176,8 +172,7 @@ public class MinecraftServerManager {
 
         addServerToDatabase(server);
 
-        bungeeCordManager.serverUp(server);
-        Logger.info("Successfully created " + name + ". Added to cache, database and informed Bungee.");
+        Logger.info("Successfully created " + name + ". Added to cache and database.");
     }
 
     public void deleteServer(MinecraftServer server, boolean monitoringUpdate) {
@@ -200,8 +195,6 @@ public class MinecraftServerManager {
         pterodactylController.deleteServer(minecraftServer);
 
         deleteServerFromDatabase(minecraftServer);
-
-        bungeeCordManager.serverDown(minecraftServer);
 
         Logger.info("Successfully deleted " + minecraftServer.getName());
 
@@ -251,4 +244,5 @@ public class MinecraftServerManager {
         MongoCollection<Document> collection = mongoDatabase.getDatabase().getCollection(MINECRAFT_SERVER_COLLECTION);
         collection.deleteOne(document);
     }
+
 }

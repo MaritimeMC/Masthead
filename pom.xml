@@ -104,6 +104,11 @@
             <artifactId>commons-text</artifactId>
             <version>1.9</version>
         </dependency>
+        <dependency>
+            <groupId>io.vacco.java-express</groupId>
+            <artifactId>java-express</artifactId>
+            <version>0.2.1</version>
+        </dependency>
     </dependencies>
 
 

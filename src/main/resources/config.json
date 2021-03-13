@@ -1,6 +1,4 @@
 {
-  "bungeecord": "mc.minedroid.network",
-  "http_port": 3091,
   "pterodactyl_host": "https://panel.minedroid.network",
   "pterodactyl_client_api_key": "DNd7McXoU43Ov5EA3zY1PEjomBTmeH0uXlU2J3EHvkatxBEA",
   "pterodactyl_application_api_key": "myvUWVxJBWul6fygaSzPlRE5dQFrHqwv8ShBH9mLGtBaOLjc",

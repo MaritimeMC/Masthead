@@ -12,6 +12,7 @@ public class ServerGroupSkyWars extends ServerGroup {
                 true,
                 ServerPlugin.SKYWARS,
                 SupportedMinecraftVersion._188,
+                true,
                 LoadBalanceConfiguration.MOST_PLAYERS,
                 1024,
                 1024,

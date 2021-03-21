@@ -40,11 +40,17 @@ public class MinecraftServerListener extends MastheadListener {
                     minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.DEAD, UtilizationState.STOPPING);
                     return;
                 case RUNNING:
-                    minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.IDLE, UtilizationState.RUNNING);
+
+                    if (group.isGameServer())
+                        minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.IDLE, UtilizationState.RUNNING);
+                    else
+                        minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.RUNNING, UtilizationState.RUNNING);
+
+
+
                     return;
                 case STARTING:
                     minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.STARTING, UtilizationState.STARTING);
-
             }
         }
     }

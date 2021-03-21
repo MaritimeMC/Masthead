@@ -3,6 +3,7 @@ package minedroid.network.masthead.group.monitor;
 public enum CreationUpdateReason {
 
     SERVER_DEAD,
-    STARTUP;
+    STARTUP,
+    SERVER_STATUS_CHANGE;
 
 }

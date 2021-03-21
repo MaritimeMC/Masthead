@@ -12,6 +12,7 @@ public class ServerGroupHub extends ServerGroup {
                 true,
                 ServerPlugin.HUB,
                 SupportedMinecraftVersion._188,
+                false,
                 LoadBalanceConfiguration.LEAST_PLAYERS,
                 1024,
                 512,

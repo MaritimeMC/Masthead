@@ -12,6 +12,7 @@ public class ServerGroupStaff extends ServerGroup {
                 false,
                 ServerPlugin.STAFF,
                 SupportedMinecraftVersion._188,
+                false,
                 LoadBalanceConfiguration.RANDOM,
                 1024,
                 512,

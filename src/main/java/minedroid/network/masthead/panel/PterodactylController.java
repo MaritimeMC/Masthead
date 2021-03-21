@@ -108,7 +108,7 @@ public class PterodactylController {
         server.setName(name);
 
         server.setEnvironment(
-                generateEnvironmentVariables(serverGroup.getMinecraftVersion(), name)
+                generateEnvironmentVariables(serverGroup.getMinecraftVersion(), serverGroup.getBasePlugin().getRepositoryName(), name)
         );
 
         server.setMemory(serverGroup.getRam(), DataType.MB);
@@ -135,12 +135,13 @@ public class PterodactylController {
         return minecraftServer;
     }
 
-    private Map<String, String> generateEnvironmentVariables(SupportedMinecraftVersion smv, String name) {
+    private Map<String, String> generateEnvironmentVariables(SupportedMinecraftVersion smv, String repoName, String name) {
         Map<String, String> env = new HashMap<>();
         env.put("MINECRAFT_VERSION", smv.getPaperVersionId());
         env.put("SERVER_JARFILE", "server.jar");
         env.put("BUILD_NUMBER", "latest");
         env.put("SERVER_NAME", name);
+        env.put("GROUP_REPO_NAME", repoName);
 
         return env;
     }

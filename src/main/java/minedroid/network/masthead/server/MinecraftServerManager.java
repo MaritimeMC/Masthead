@@ -92,6 +92,11 @@ public class MinecraftServerManager {
         MongoCollection<Document> collection = mongoDatabase.getDatabase().getCollection(MINECRAFT_SERVER_COLLECTION);
         collection.updateOne(new Document("name", server.getName()), new Document("$set", new Document()
                 .append("status", status.name()).append("panelStatus", panelStatus.name())));
+
+
+        if (status == ServerStatus.RUNNING)
+            monitorMap.get(serverGroupManager.getGroupByName(server.getServerGroupName())).requestCreationUpdate(CreationUpdateReason.SERVER_STATUS_CHANGE);
+
     }
 
     public void removeLoneServers() {

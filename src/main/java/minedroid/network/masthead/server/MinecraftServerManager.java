@@ -1,5 +1,6 @@
 package minedroid.network.masthead.server;
 
+import com.google.common.collect.Sets;
 import com.mattmalec.pterodactyl4j.UtilizationState;
 import com.mattmalec.pterodactyl4j.application.entities.ApplicationServer;
 import com.mattmalec.pterodactyl4j.client.entities.ClientServer;
@@ -8,6 +9,7 @@ import com.mongodb.client.MongoCollection;
 import lombok.SneakyThrows;
 import minedroid.network.masthead.ThreadPool;
 import minedroid.network.masthead.db.MongoDatabase;
+import minedroid.network.masthead.db.RedisDatabase;
 import minedroid.network.masthead.event.ListenerManager;
 import minedroid.network.masthead.group.ServerGroupManager;
 import minedroid.network.masthead.group.monitor.CreationUpdateReason;
@@ -18,6 +20,8 @@ import minedroid.network.masthead.model.ServerGroup;
 import minedroid.network.masthead.model.ServerStatus;
 import minedroid.network.masthead.panel.PterodactylController;
 import minedroid.network.masthead.panel.WebSocketListener;
+import minedroid.network.masthead.pubsub.SubscribeUtil;
+import minedroid.network.masthead.pubsub.impl.PlayerCountUpdate;
 import org.bson.Document;
 
 import java.util.*;
@@ -31,6 +35,7 @@ public class MinecraftServerManager {
     private final PterodactylController pterodactylController;
     private final MongoDatabase mongoDatabase;
     private final ListenerManager listenerManager;
+    private final RedisDatabase redisDatabase;
 
     public static final String MINECRAFT_SERVER_COLLECTION = "mh_minecraftserver";
     private static final String LONE_IGNORE_PREFIX = "MHIGNORE";
@@ -40,11 +45,12 @@ public class MinecraftServerManager {
 
     private final Map<ServerGroup, ServerGroupMonitor> monitorMap;
 
-    public MinecraftServerManager(ServerGroupManager serverGroupManager, PterodactylController pterodactylController, MongoDatabase mongoDatabase, ListenerManager listenerManager) {
+    public MinecraftServerManager(ServerGroupManager serverGroupManager, PterodactylController pterodactylController, MongoDatabase mongoDatabase, ListenerManager listenerManager, RedisDatabase redisDatabase) {
         this.serverGroupManager = serverGroupManager;
         this.pterodactylController = pterodactylController;
         this.mongoDatabase = mongoDatabase;
         this.listenerManager = listenerManager;
+        this.redisDatabase = redisDatabase;
         this.serverCache = new HashSet<>();
         this.monitorMap = new HashMap<>();
 
@@ -56,6 +62,8 @@ public class MinecraftServerManager {
         loadServers();
         cleanDisposableServers();
         beginMonitoring();
+
+        SubscribeUtil.subscribe("masthead:*", Sets.newHashSet(new PlayerCountUpdate(this)), redisDatabase);
     }
 
     public void beginMonitoring() {
@@ -65,6 +73,15 @@ public class MinecraftServerManager {
             serverGroupMonitor.requestCreationUpdate(CreationUpdateReason.STARTUP);
 
             monitorMap.put(serverGroup, serverGroupMonitor);
+
+            new Timer().scheduleAtFixedRate(
+                    new TimerTask() {
+                        @Override
+                        public void run() {
+                            serverGroupMonitor.requestCreationUpdate(CreationUpdateReason.AUTOMATIC);
+                        }
+                    }
+            , 10 * 1000, 10 * 1000);
         }
     }
 
@@ -72,9 +89,12 @@ public class MinecraftServerManager {
         synchronized (SERVER_CACHE_LOCK) {
 
             Set<MinecraftServer> clone = new HashSet<>(serverCache);
-            Logger.info("Searching old non-disposable servers and replacing...");
+            Logger.info("Searching old disposable servers and replacing...");
             for (MinecraftServer minecraftServer : clone) {
-                if (serverGroupManager.getGroupByName(minecraftServer.getServerGroupName()).isDisposable()) {
+                ServerGroup group = serverGroupManager.getGroupByName(minecraftServer.getServerGroupName());
+                if (group == null) continue;
+
+                if (group.isDisposable()) {
                     deleteServer(minecraftServer, false, false);
                 }
             }
@@ -97,6 +117,20 @@ public class MinecraftServerManager {
         if (status == ServerStatus.RUNNING)
             monitorMap.get(serverGroupManager.getGroupByName(server.getServerGroupName())).requestCreationUpdate(CreationUpdateReason.SERVER_STATUS_CHANGE);
 
+    }
+
+    public void updatePlayerCount(String serverName, int count) {
+        for (MinecraftServer server : serverCache) {
+            if (server.getName().equals(serverName)) updatePlayerCount(server, count);
+        }
+    }
+
+    public void updatePlayerCount(MinecraftServer minecraftServer, int count) {
+        minecraftServer.setPlayerCount(count);
+
+        MongoCollection<Document> collection = mongoDatabase.getDatabase().getCollection(MINECRAFT_SERVER_COLLECTION);
+        collection.updateOne(new Document("name", minecraftServer.getName()), new Document("$set", new Document()
+                .append("playerCount", count)));
     }
 
     public void removeLoneServers() {
@@ -163,10 +197,6 @@ public class MinecraftServerManager {
         else createServerFlow(serverGroup);
     }
 
-    public void createServer(ServerGroup serverGroup) {
-        createServer(serverGroup, true);
-    }
-
     public void createServerFlow(ServerGroup serverGroup) {
         String name = generateServerName(serverGroup);
         MinecraftServer server = pterodactylController.createServer(serverGroup, name);
@@ -193,9 +223,7 @@ public class MinecraftServerManager {
     }
 
     private void deleteServerFlow(MinecraftServer minecraftServer, boolean monitoringUpdate) {
-        synchronized (SERVER_CACHE_LOCK) {
-            serverCache.remove(minecraftServer);
-        }
+        serverCache.remove(minecraftServer);
 
         pterodactylController.deleteServer(minecraftServer);
 

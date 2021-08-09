@@ -24,9 +24,6 @@ public class MinecraftServer {
     private UtilizationState panelStatus;
 
     @Setter
-    private boolean online;
-
-    @Setter
     private int playerCount;
 
     private final String serverGroupName;

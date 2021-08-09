@@ -16,7 +16,7 @@ public class ServerGroupHub extends ServerGroup {
                 LoadBalanceConfiguration.LEAST_PLAYERS,
                 1024,
                 512,
-                new CreationThresholdsContainer(1, 1, 4)
+                new CreationThresholdsContainer(1, 0, 4)
         );
     }
 }

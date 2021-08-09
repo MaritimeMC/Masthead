@@ -17,7 +17,7 @@ public class CreationThresholdsContainer {
     private final int maximumServers;
 
     /**
-     * The minimum amount of servers which should always be available and online.
+     * The minimum amount of servers which should always be registered in the system, dead or alive.
      *
      * @return The minimum servers value.
      */

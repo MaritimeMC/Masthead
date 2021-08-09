@@ -16,7 +16,7 @@ public class ServerGroupStaff extends ServerGroup {
                 LoadBalanceConfiguration.RANDOM,
                 1024,
                 512,
-                new CreationThresholdsContainer(1, 1, 1)
+                new CreationThresholdsContainer(1, 0, 1)
         );
     }
 }

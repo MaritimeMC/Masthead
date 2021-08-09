@@ -45,10 +45,10 @@ public class Masthead {
         RedisDatabase redisDatabase = new RedisDatabase(fileManager);
         redisDatabase.connect();
 
-        ServerGroupManager serverGroupManager = new ServerGroupManager(pterodactylController, fileManager, mongoDatabase);
+        ServerGroupManager serverGroupManager = new ServerGroupManager(mongoDatabase);
         serverGroupManager.load();
 
-        MinecraftServerManager minecraftServerManager = new MinecraftServerManager(serverGroupManager, pterodactylController, mongoDatabase, listenerManager);
+        MinecraftServerManager minecraftServerManager = new MinecraftServerManager(serverGroupManager, pterodactylController, mongoDatabase, listenerManager, redisDatabase);
         minecraftServerManager.load();
 
         Logger.empty();

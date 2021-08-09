@@ -2,15 +2,15 @@ package minedroid.network.masthead.group.base;
 
 import minedroid.network.masthead.model.*;
 
-public class ServerGroupSkyWars extends ServerGroup {
+public class ServerGroupBlockParty extends ServerGroup {
 
-    public ServerGroupSkyWars() {
+    public ServerGroupBlockParty() {
         super(
-                "sky",
-                20,
+                "party",
+                16,
                 true,
                 true,
-                ServerPlugin.SKYWARS,
+                ServerPlugin.BLOCKPARTY,
                 SupportedMinecraftVersion._188,
                 true,
                 LoadBalanceConfiguration.MOST_PLAYERS,

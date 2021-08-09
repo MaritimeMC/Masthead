@@ -108,7 +108,9 @@ public class PterodactylController {
         server.setName(name);
 
         server.setEnvironment(
-                generateEnvironmentVariables(serverGroup.getMinecraftVersion(), serverGroup.getBasePlugin().getRepositoryName(), name)
+                generateEnvironmentVariables(serverGroup.getMinecraftVersion(),
+                        (serverGroup.getBasePlugin() != null) ? serverGroup.getBasePlugin().getRepositoryName() : null,
+                        name)
         );
 
         server.setMemory(serverGroup.getRam(), DataType.MB);
@@ -141,7 +143,7 @@ public class PterodactylController {
         env.put("SERVER_JARFILE", "server.jar");
         env.put("BUILD_NUMBER", "latest");
         env.put("SERVER_NAME", name);
-        env.put("GROUP_REPO_NAME", repoName);
+        if (repoName != null) env.put("GROUP_REPO_NAME", repoName);
 
         return env;
     }
@@ -164,7 +166,6 @@ public class PterodactylController {
                 server.getAllocations().get().get(0).getPortInt(),
                 ServerStatus.CREATING,
                 UtilizationState.OFFLINE,
-                true,
                 0,
                 group.getName()
         );

@@ -43,18 +43,4 @@ public class JsonConfigurationFile {
         Logger.info("Successfully loaded: " + name);
     }
 
-    @SneakyThrows
-    public void save() {
-        if (data == null) {
-            Logger.warning("Could not save " + name + " as file was not loaded.");
-            return;
-        }
-
-        File f = new File(FILE_DIRECTORY, name);
-
-        try (FileWriter fw = new FileWriter(f)) {
-            fw.write(GSON.toJson(data));
-            Logger.info("Successfully saved: " + name);
-        }
-    }
 }

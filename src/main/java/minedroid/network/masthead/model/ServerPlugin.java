@@ -9,7 +9,9 @@ public enum ServerPlugin {
 
     HUB("Hub"),
     SKYWARS("SkyWars"),
-    STAFF("StaffServer");
+    STAFF("StaffServer"),
+    SURVIVAL("Survival"),
+    BLOCKPARTY("BlockParty");
 
     private final String repositoryName;
 }

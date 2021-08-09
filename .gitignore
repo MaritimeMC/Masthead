@@ -107,3 +107,6 @@ data/
 # macOS
 .DS_Store
 ._*
+
+# Gradle
+.gradle/

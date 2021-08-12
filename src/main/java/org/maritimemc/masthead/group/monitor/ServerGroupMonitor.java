@@ -6,6 +6,7 @@ import org.maritimemc.masthead.model.MinecraftServer;
 import org.maritimemc.masthead.model.ServerGroup;
 import org.maritimemc.masthead.model.ServerStatus;
 import org.maritimemc.masthead.server.MinecraftServerManager;
+import redis.clients.jedis.Jedis;
 
 import java.util.Set;
 

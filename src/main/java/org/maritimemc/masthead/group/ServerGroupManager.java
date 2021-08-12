@@ -6,6 +6,7 @@ import org.bson.Document;
 import org.maritimemc.masthead.Masthead;
 import org.maritimemc.masthead.db.MongoDatabase;
 import org.maritimemc.masthead.group.base.ServerGroupBlockParty;
+import org.maritimemc.masthead.group.base.ServerGroupHub;
 import org.maritimemc.masthead.log.Logger;
 import org.maritimemc.masthead.model.ServerGroup;
 
@@ -19,7 +20,8 @@ public class ServerGroupManager {
     public static final String SERVER_GROUP_COLLECTION = "mh_servergroup";
 
     private static final Set<ServerGroup> DEFAULT_SERVER_GROUPS = Sets.newHashSet(
-            new ServerGroupBlockParty()
+            new ServerGroupBlockParty(),
+            new ServerGroupHub()
     );
 
     private final Set<ServerGroup> serverGroups;

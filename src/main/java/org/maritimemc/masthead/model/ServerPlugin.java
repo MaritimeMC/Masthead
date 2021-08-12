@@ -7,7 +7,8 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public enum ServerPlugin {
 
-    BLOCKPARTY("BlockParty");
+    BLOCKPARTY("block-party"),
+    HUB("hub");
 
     private final String repositoryName;
 }

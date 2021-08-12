@@ -24,6 +24,7 @@ import org.maritimemc.masthead.pubsub.SubscribeUtil;
 import org.maritimemc.masthead.pubsub.impl.PlayerCountUpdate;
 import org.bson.Document;
 import org.maritimemc.masthead.Masthead;
+import org.maritimemc.masthead.pubsub.impl.SetRunning;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -62,7 +63,7 @@ public class MinecraftServerManager {
         cleanDisposableServers();
         beginMonitoring();
 
-        SubscribeUtil.subscribe("masthead:*", Sets.newHashSet(new PlayerCountUpdate(this)), redisDatabase);
+        SubscribeUtil.subscribe("masthead:*", Sets.newHashSet(new PlayerCountUpdate(this), new SetRunning(this)), redisDatabase);
     }
 
     public void beginMonitoring() {
@@ -104,6 +105,16 @@ public class MinecraftServerManager {
         return serverCache.stream().filter((sg) -> sg.getServerGroupName().equals(group.getName())).collect(Collectors.toSet());
     }
 
+    public void updateServerStatus(String serverName, ServerStatus status) {
+        for (MinecraftServer server : serverCache) {
+            if (server.getName().equals(serverName)) updateServerStatus(server, status);
+        }
+    }
+
+    public void updateServerStatus(MinecraftServer server, ServerStatus status) {
+        updateServerStatus(server, status, server.getPanelStatus());
+    }
+
     public void updateServerStatus(MinecraftServer server, ServerStatus status, UtilizationState panelStatus) {
         server.setStatus(status);
         server.setPanelStatus(panelStatus);
@@ -115,7 +126,6 @@ public class MinecraftServerManager {
 
         if (status == ServerStatus.RUNNING)
             monitorMap.get(serverGroupManager.getGroupByName(server.getServerGroupName())).requestCreationUpdate(CreationUpdateReason.SERVER_STATUS_CHANGE);
-
     }
 
     public void updatePlayerCount(String serverName, int count) {

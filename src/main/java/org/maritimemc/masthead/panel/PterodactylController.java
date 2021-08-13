@@ -10,10 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.maritimemc.masthead.event.ListenerManager;
 import org.maritimemc.masthead.file.FileManager;
 import org.maritimemc.masthead.log.Logger;
-import org.maritimemc.masthead.model.MinecraftServer;
-import org.maritimemc.masthead.model.ServerGroup;
+import org.maritimemc.masthead.model.*;
 import org.maritimemc.masthead.model.ServerStatus;
-import org.maritimemc.masthead.model.SupportedMinecraftVersion;
 import org.maritimemc.masthead.time.ProcessTimer;
 
 import java.util.HashMap;
@@ -163,7 +161,7 @@ public class PterodactylController {
                 server.getAllocations().get().get(0).getIP(),
                 server.getAllocations().get().get(0).getPortInt(),
                 ServerStatus.CREATING,
-                UtilizationState.OFFLINE,
+                ServerPanelState.OFFLINE,
                 0,
                 group.getName()
         );

@@ -17,6 +17,7 @@ import org.maritimemc.masthead.group.monitor.ServerGroupMonitor;
 import org.maritimemc.masthead.log.Logger;
 import org.maritimemc.masthead.model.MinecraftServer;
 import org.maritimemc.masthead.model.ServerGroup;
+import org.maritimemc.masthead.model.ServerPanelState;
 import org.maritimemc.masthead.model.ServerStatus;
 import org.maritimemc.masthead.panel.PterodactylController;
 import org.maritimemc.masthead.panel.WebSocketListener;
@@ -115,7 +116,7 @@ public class MinecraftServerManager {
         updateServerStatus(server, status, server.getPanelStatus());
     }
 
-    public void updateServerStatus(MinecraftServer server, ServerStatus status, UtilizationState panelStatus) {
+    public void updateServerStatus(MinecraftServer server, ServerStatus status, ServerPanelState panelStatus) {
         server.setStatus(status);
         server.setPanelStatus(panelStatus);
 
@@ -124,8 +125,9 @@ public class MinecraftServerManager {
                 .append("status", status.name()).append("panelStatus", panelStatus.name())));
 
 
-        if (status == ServerStatus.RUNNING)
-            monitorMap.get(serverGroupManager.getGroupByName(server.getServerGroupName())).requestCreationUpdate(CreationUpdateReason.SERVER_STATUS_CHANGE);
+        ServerGroup group = serverGroupManager.getGroupByName(server.getServerGroupName());
+        if (status == ServerStatus.RUNNING && group.isGameServer())
+            monitorMap.get(group).requestCreationUpdate(CreationUpdateReason.SERVER_STATUS_CHANGE);
     }
 
     public void updatePlayerCount(String serverName, int count) {

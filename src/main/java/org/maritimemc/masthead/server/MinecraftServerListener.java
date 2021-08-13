@@ -6,6 +6,7 @@ import org.maritimemc.masthead.event.MastheadListener;
 import org.maritimemc.masthead.event.impl.ServerStatusChangeEvent;
 import org.maritimemc.masthead.group.ServerGroupManager;
 import org.maritimemc.masthead.model.ServerGroup;
+import org.maritimemc.masthead.model.ServerPanelState;
 import org.maritimemc.masthead.model.ServerStatus;
 
 public class MinecraftServerListener extends MastheadListener {
@@ -37,20 +38,20 @@ public class MinecraftServerListener extends MastheadListener {
             switch (event.getStatus()) {
                 case OFFLINE:
                 case STOPPING:
-                    minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.DEAD, UtilizationState.STOPPING);
+                    minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.DEAD, ServerPanelState.STOPPING);
                     return;
                 case RUNNING:
 
                     if (group.isGameServer())
-                        minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.IDLE, UtilizationState.RUNNING);
+                        minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.IDLE, ServerPanelState.RUNNING);
                     else
-                        minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.RUNNING, UtilizationState.RUNNING);
+                        minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.RUNNING, ServerPanelState.RUNNING);
 
 
 
                     return;
                 case STARTING:
-                    minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.STARTING, UtilizationState.STARTING);
+                    minecraftServerManager.updateServerStatus(event.getServer(), ServerStatus.STARTING, ServerPanelState.STARTING);
             }
         }
     }

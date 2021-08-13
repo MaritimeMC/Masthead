@@ -1,14 +1,13 @@
 package org.maritimemc.masthead.model;
 
-import com.mattmalec.pterodactyl4j.UtilizationState;
 import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Objects;
+
 @AllArgsConstructor
 @Getter
-@EqualsAndHashCode
 public class MinecraftServer {
 
     private final String name;
@@ -21,11 +20,23 @@ public class MinecraftServer {
     private ServerStatus status;
 
     @Setter
-    private UtilizationState panelStatus;
+    private ServerPanelState panelStatus;
 
     @Setter
     private int playerCount;
 
     private final String serverGroupName;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MinecraftServer that = (MinecraftServer) o;
+        return Objects.equals(name, that.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
+    }
 }

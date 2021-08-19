@@ -7,6 +7,7 @@ import org.maritimemc.masthead.Masthead;
 import org.maritimemc.masthead.db.MongoDatabase;
 import org.maritimemc.masthead.group.base.ServerGroupBlockParty;
 import org.maritimemc.masthead.group.base.ServerGroupHub;
+import org.maritimemc.masthead.group.base.ServerGroupSurvival;
 import org.maritimemc.masthead.log.Logger;
 import org.maritimemc.masthead.model.ServerGroup;
 
@@ -21,7 +22,8 @@ public class ServerGroupManager {
 
     private static final Set<ServerGroup> DEFAULT_SERVER_GROUPS = Sets.newHashSet(
             new ServerGroupBlockParty(),
-            new ServerGroupHub()
+            new ServerGroupHub(),
+            new ServerGroupSurvival()
     );
 
     private final Set<ServerGroup> serverGroups;

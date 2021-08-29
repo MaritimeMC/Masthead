@@ -74,7 +74,7 @@ public class PterodactylController {
 
         ClientServer execute = pteroClient.retrieveServerByIdentifier(server.getIdentifier()).execute();
 
-        if (!execute.isInstalling()) pteroClient.setPower(execute, PowerAction.STOP).execute();
+        if (!execute.isInstalling()) execute.setPower(PowerAction.STOP).execute();
 
         server.getController().delete(false).execute();
 
@@ -101,11 +101,14 @@ public class PterodactylController {
 
         server.setName(name);
 
+        server.setDockerImage(serverGroup.getMinecraftVersion().getImage());
+
         server.setEnvironment(
                 generateEnvironmentVariables(serverGroup.getMinecraftVersion(),
                         (serverGroup.getBasePlugin() != null) ? serverGroup.getBasePlugin().getRepositoryName() : null,
                         name,
-                        serverGroup.isUseAntiCheat())
+                        serverGroup.isUseAntiCheat(),
+                        serverGroup.getMaximumPlayers())
         );
 
         server.setMemory(serverGroup.getRam(), DataType.MB);
@@ -134,12 +137,13 @@ public class PterodactylController {
         return minecraftServer;
     }
 
-    private Map<String, EnvironmentValue<?>> generateEnvironmentVariables(SupportedMinecraftVersion smv, String repoName, String name, boolean useAntiCheat) {
+    private Map<String, EnvironmentValue<?>> generateEnvironmentVariables(SupportedMinecraftVersion smv, String repoName, String name, boolean useAntiCheat, int maxPlayers) {
         Map<String, EnvironmentValue<?>> env = new HashMap<>();
         env.put("MINECRAFT_VERSION", EnvironmentValue.ofString(smv.getPaperVersionId()));
         env.put("SERVER_NAME", EnvironmentValue.ofString(name));
         if (repoName != null) env.put("GROUP_REPO_NAME", EnvironmentValue.ofString(repoName));
         env.put("AC", EnvironmentValue.of(useAntiCheat));
+        env.put("MAX_PLAYERS", EnvironmentValue.ofInteger(maxPlayers));
 
         return env;
     }

@@ -10,7 +10,7 @@ public class ServerGroupSurvival extends ServerGroup {
                 false,
                 true,
                 ServerPlugin.SURVIVAL,
-                SupportedMinecraftVersion._117,
+                SupportedMinecraftVersion._118,
                 false,
                 LoadBalanceConfiguration.RANDOM,
                 5120,
